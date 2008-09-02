@@ -7,7 +7,7 @@ use constant False=> Win32::OLE::Variant->new(VT_BOOL, 0);
 
 BEGIN {
   use vars qw($VERSION);
-  $VERSION     = '0.05';
+  $VERSION     = '0.08';
 }
 
 =head1 NAME
@@ -16,15 +16,44 @@ Win32::OLE::CrystalRuntime::Application::Report - Perl Interface to the Crystal 
 
 =head1 SYNOPSIS
 
+  use Win32::OLE::CrystalRuntime::Application;
+  my $application=Win32::OLE::CrystalRuntime::Application->new;
+  my $report=$application->report(filename=>$filename);
+  $report->export(format=>"pdf", filename=>"export.pdf");
+
 =head1 DESCRIPTION
+
+This package is a wrapper around the OLE object for a Crystal Report.
 
 =head1 USAGE
 
 =head1 CONSTRUCTOR
 
-=head2 new
+You must construct this object from a L<Win32::OLE::CrystalRuntime::Application> object as the ole object is constructed at the same time and is generated from the application->ole object.
 
-  my $report=Win32::OLE::CrystalRuntime::Application::Report->new(filename=>$filename);
+  use Win32::OLE::CrystalRuntime::Application;
+  my $application=Win32::OLE::CrystalRuntime::Application->new;
+  my $report=$application->report(filename=>$filename);
+
+
+                                               Perl API       
+                                                  |           
+                                        +--------------------+
+            Perl API                 +---------------------+ |
+               |                  +----------------------+ | |
+  +---------------------------+ +----------------------+ | | |
+  |                           | |                      | | | |
+  |  Perl Application Object  | |  Perl Report Object  | | | |
+  |                           | |                      | | | |
+  |       "ole" method        | |     "ole" method     | | | |
+  |     +==============+      +-+   +==============+   | | | |
+  |     |              |      | |   |              |   | | | |
+  |     |  Win32::OLE  |      | |   |  Win32::OLE  |   | | | |
+  |     |  Application |============|    Report    |   | | | |
+  |     |    Object    |      | |   |    Object    |   | | |-+
+  |     |              |      | |   |              |   | |-+
+  |     +==============+      | |   +==============+   |-+
+  +---------------------------+ +----------------------+ 
 
 =cut
 
@@ -39,19 +68,17 @@ sub new {
 
 =head1 METHODS
 
-=head2 initialize
-
 =cut
 
 sub initialize {
   my $self = shift();
   %$self=@_;
   if (-r $self->filename) {
-    $self->ole($self->parent->ole->OpenReport($self->filename, 1));
+    $self->{'ole'}=$self->parent->ole->OpenReport($self->filename, 1);
     die(Win32::OLE->LastError) if Win32::OLE->LastError;
     die("Error: Cannot create OLE report object") unless ref($self->ole) eq "Win32::OLE";
   } else {
-    die(sprintf("Error: Cannot read file %s.", $self->filename));
+    die(sprintf(qq{Error: Cannot read file "%s".}, $self->filename));
   }
   $self->ole->DiscardSavedData();
   die(Win32::OLE->LastError) if Win32::OLE->LastError;
@@ -68,13 +95,15 @@ sub initialize {
 
 =head2 filename
 
-Returns the name of the report filename.
+Returns the name of the report filename. This value is read only after object construction.
 
   my $filename=$report->filename;
 
 Set on construction
 
-  my $report=Win32::OLE::CrystalRuntime::Application::Report->new(filename=>$filename);
+  my $report=Win32::OLE::CrystalRuntime::Application::Report->new(
+               filename=>$filename,
+             );
 
 =cut
 
@@ -85,18 +114,12 @@ sub filename {
 
 =head2 ole
 
-Set or Returns the OLE report object.  This object is the Win32::OLE object that was created with the OpenReport Method.
+Returns the OLE report object.  This object is the Win32::OLE object that was constructed during initialization from the $application->report() method.
 
 =cut
 
 sub ole {
   my $self=shift;
-  $self->{'ole'}=shift if @_;
-  unless (ref($self->{'ole'}) eq "Win32::OLE") {
-    $self->{'ole'}=Win32::OLE->CreateObject($self->ProgramID);
-    die(Win32::OLE->LastError) if Win32::OLE->LastError;
-  }
-  die("Error: Could not create the Win32::OLE object.") unless defined $self->{'ole'};
   return $self->{'ole'};
 }
 
@@ -106,15 +129,43 @@ Returns the parent application object for the report.
 
   my $application=$report->parent;
 
-Set on construction
+Set on construction in the $application->report method.
 
-  my $report=Win32::OLE::CrystalRuntime::Application::Report->new(parent=>$application);
+  my $report=Win32::OLE::CrystalRuntime::Application::Report->new(
+               parent=>$application
+             );
 
 =cut
 
 sub parent {
   my $self=shift;
   return $self->{'parent'};
+}
+
+=head2 setParameters
+
+Sets the report parameters.
+
+  $report->setParameters($key1=>$value1, $key2=>$value2, ...);  #Always pass values as strings and convert in report
+  $report->setParameters(%hash);
+
+=cut
+
+sub setParameters {
+  my $self=shift;
+  my $hash={@_};
+  foreach my $index (1 .. $self->ole->ParameterFields->Count) {
+    die(Win32::OLE->LastError) if Win32::OLE->LastError;
+    my $key=$self->ole->ParameterFields->Item($index)->ParameterFieldName;
+    die(Win32::OLE->LastError) if Win32::OLE->LastError;
+    #printf qq{Setting Parameter: "%s" => "%s"\n}, $key, $hash->{$key};
+    if (defined $hash->{$key}) {
+      $self->ole->ParameterFields->Item($index)->AddCurrentValue($hash->{$key});
+      die(Win32::OLE->LastError) if Win32::OLE->LastError;
+    } else {
+      warn(sprintf(qq{Warning: Report Parameter "%s" is not defined.}, $key));
+    }
+  }
 }
 
 =head2 export
@@ -130,8 +181,10 @@ Saves the report in the specified format to the specified filename.
 sub export {
   my $self=shift;
   my $opt={@_};
-  my $formatid=$opt->{'formatid'} || $self->FormatID->{$opt->{'format'}||'pdf'};
-  $opt->{'filename'} or die("Error: Export filename is required.");
+  my $formatid=$opt->{'formatid'} ||
+                 $self->FormatID->{$opt->{'format'}||'pdf'};
+  die("Error: export method requires a valid format.") unless $formatid;
+  die("Error: export method requires a filename.") unless $opt->{'filename'};
 
   $self->ole->ExportOptions->{'DestinationType'} = 1;         #1=>filesystem
   die(Win32::OLE->LastError) if Win32::OLE->LastError;
@@ -153,6 +206,7 @@ sub export {
 
   $self->ole->Export(False);
   die(Win32::OLE->LastError) if Win32::OLE->LastError;
+
   return $self;
 }
 
@@ -186,6 +240,8 @@ sub FormatID {
 =head1 BUGS
 
 =head1 SUPPORT
+
+Please try Business Objects.
 
 =head1 AUTHOR
 
