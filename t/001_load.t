@@ -4,13 +4,23 @@ use Test::More tests => 7;
 
 is(".", ".", "We at least ran one test!");
 
+my $skip=0;
+eval {require Win32::OLE};
+if ($@) { #no Win32::OLE
+  $skip=1;
+} else {  #have Win32::OLE
+  my $obj=Win32::OLE->CreateObject(qq{CrystalRuntime.Application});
+  $skip=Win32::OLE->LastError; #either "0" or "Invalid class string"
+  warn($skip) if $skip;
+  undef $obj;
+}
+
 SKIP: {
-  eval {require Win32::OLE};
-  my $gotWin32=not $@;
-  skip qq{Package "Win32::OLE" is not available.}, 6 unless $gotWin32;
+  skip qq{Win32::OLE and CrystalRuntime.Application are not available.}, 6
+    if $skip;
+
   use_ok( 'Win32::OLE::CrystalRuntime::Application' );
   use_ok( 'Win32::OLE::CrystalRuntime::Application::Report' );
-
   my $application=Win32::OLE::CrystalRuntime::Application->new;
   isa_ok ($application, 'Win32::OLE::CrystalRuntime::Application');
   isa_ok ($application->ole, 'Win32::OLE');

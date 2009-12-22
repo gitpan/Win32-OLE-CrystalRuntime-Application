@@ -13,6 +13,6 @@ WriteMakefile(
                      'Win32::OLE'          => 0,
                      'Win32::OLE::Variant' => 0,
                     },
-           dist => {DIST_DEFAULT => 'zipdist'},
+            dist => {DIST_DEFAULT => 'zipdist'},
 
 );
