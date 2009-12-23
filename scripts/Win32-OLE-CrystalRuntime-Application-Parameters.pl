@@ -1,4 +1,11 @@
 #!/usr/bin/perl
+
+=head1 NAME
+
+Win32-OLE-CrystalRuntime-Application-Parameters.pl - CrystalRuntime-Application Parameter Example
+
+=cut
+
 use strict;
 use warnings;
 

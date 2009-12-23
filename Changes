@@ -28,3 +28,7 @@ Revision history for Perl module Win32::OLE::CrystalRuntime::Application
   - Packages are now DOS \r\n format
 0.11 2009-12-21
   - All debug prints are now \r\n terminated
+0.12 2009-12-22
+  - Documentation and Constants
+  - Updated Test Skips
+  - Added Constants test to manifest

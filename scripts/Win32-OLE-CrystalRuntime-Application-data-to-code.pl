@@ -1,4 +1,11 @@
 #!/usr/bin/perl
+
+=head1 NAME
+
+Win32-OLE-CrystalRuntime-Application-data-to-code.pl - CrystalRuntime-Application Constants Source Generator
+
+=cut
+
 use strict;
 use warnings;
 

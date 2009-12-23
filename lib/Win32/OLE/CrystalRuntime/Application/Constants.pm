@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use base qw{Exporter};
 
-our $VERSION     = '0.11';
+our $VERSION     = '0.12';
 our %EXPORT_TAGS = ();
 our @EXPORT_OK   = ();
 
@@ -24,7 +24,7 @@ This package provide constants for Win32::OLE::CrystalRuntime::Application objec
 =head1 USAGE
 
   use Win32::OLE::CrystalRuntime::Application::Constants qw{:CRAlignment};
-  print crLeftAlign, "\n";
+  print crLeftAlign(), "\n"; #use () to pass use strict;
 
 =head1 CONSTANTS
 

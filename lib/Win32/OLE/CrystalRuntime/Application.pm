@@ -6,7 +6,7 @@ use Win32::OLE::CrystalRuntime::Application::Report;
 use Win32::OLE;
 use DateTime;
 
-our $VERSION='0.11';
+our $VERSION='0.12';
 our $PACKAGE=__PACKAGE__;
 
 =head1 NAME
@@ -140,7 +140,7 @@ sub report {
   my %data=@_;
   die("Error: Filename is not readable") unless -r $data{"filename"};
   $data{"application"}=$self;
-  $data{"debug"}||=$self->debug;
+  $data{"debug"}=$self->debug unless defined($data{"debug"});
   printf "%s: %s->%s: Constructing Report Object\r\n", DateTime->now, $PACKAGE, "report" if $self->debug > 7;
   return Win32::OLE::CrystalRuntime::Application::Report->new(%data);
 }

@@ -1,6 +1,6 @@
 package Win32::OLE::CrystalRuntime::Application::Report;
 use base qw{Win32::OLE::CrystalRuntime::Application::Base};
-use Win32::OLE::CrystalRuntime::Application::Constants qw{:CRExportFormatType crEDTDiskFile crSubreportObject};
+use Win32::OLE::CrystalRuntime::Application::Constants qw{:CRExportFormatType crEDTDiskFile crSubreportObject crOpenReportByTempCopy};
 use strict;
 use warnings;
 use Win32::OLE;
@@ -9,7 +9,7 @@ use constant True => Win32::OLE::Variant->new(VT_BOOL, 1);
 use constant False=> Win32::OLE::Variant->new(VT_BOOL, 0);
 use DateTime;
 
-our $VERSION='0.11';
+our $VERSION='0.12';
 
 =head1 NAME
 
@@ -90,7 +90,7 @@ sub ole {
     if (-r $self->filename) {
       printf qq{%s: Constructing Report OLE Object with file "%s"\r\n}, DateTime->now, $self->filename if $self->debug > 7;
 
-      $self->{"ole"}=$self->application->ole->OpenReport($self->filename, 1);
+      $self->{"ole"}=$self->application->ole->OpenReport($self->filename, crOpenReportByTempCopy);
       die(Win32::OLE->LastError) if Win32::OLE->LastError;
       die("Error: Cannot create OLE report object") unless ref($self->ole) eq "Win32::OLE";
 
@@ -457,7 +457,6 @@ This program is free software licensed under the...
 
 The full text of the license can be found in the
 LICENSE file included with this module.
-
 
 =head1 SEE ALSO
 

@@ -1,4 +1,11 @@
 #!/usr/bin/perl
+
+=head1 NAME
+
+Win32-OLE-CrystalRuntime-Application-Information.pl - CrystalRuntime-Application Extract Report Information Example
+
+=cut
+
 use strict;
 use warnings;
 use DateTime;

@@ -12,6 +12,7 @@ WriteMakefile(
                      'constant'            => 0,
                      'Win32::OLE'          => 0,
                      'Win32::OLE::Variant' => 0,
+                     'DateTime'            => 0,
                     },
             dist => {DIST_DEFAULT => 'zipdist'},
 

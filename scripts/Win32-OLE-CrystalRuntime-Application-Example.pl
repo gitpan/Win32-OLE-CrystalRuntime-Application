@@ -1,4 +1,11 @@
 #!/usr/bin/perl
+
+=head1 NAME
+
+Win32-OLE-CrystalRuntime-Application-Example.pl - CrystalRuntime-Application Simple Export Example
+
+=cut
+
 use strict;
 use warnings;
 use Win32::OLE::CrystalRuntime::Application;
